@@ -1,33 +1,44 @@
-const express = require("express");
-const exphbs = require("express-handlebars");
+//System requirements
+const bodyParser = require("body-parser");
+
 const mongoose = require("mongoose");
 const axios = require("axios");
 const cheerio = require("cheerio");
 
-// Require all models
-// const db = require("./models");
+//Require the models
+const db = require("./models");
 
-const PORT = 3000;
+//Set the port
+const PORT = process.env.PORT || 3000;
 
-// Initialize Express
+//Initialize express
+const express = require("express");
 const app = express();
 
-// Configure middleware
-// Parse request body as JSON
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-// Make public a static folder
-app.use(express.static("public"));
+//logs using morgan
+const logger = require("morgan");
+app.use(logger("dev"));
+app.use(bodyParser.urlencoded({ extended: false }));
+
+//Set handlebars route
+const exphbs = require("express-handlebars");
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
-// Connect to the Mongo DB
+//Parse request body as JSON
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+//Make public a static folder
+app.use(express.static("public"));
+
+// If deployed, use the deployed database. Otherwise use the local mongoHeadlines database
 const MONGODB_URI =
-  process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
+  process.env.MONGODB_URI || "mongodb://localhost/newsScraper";
+//Connect to the Mongo DB
+mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
 
-mongoose.connect(MONGODB_URI);
-
-// Start the server
+//Start server
 app.listen(PORT, function() {
-  console.log("App running on port " + PORT + "!");
+  console.log("News scraping app running on http://localhost:" + PORT);
 });

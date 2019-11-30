@@ -1,44 +1,46 @@
-//System requirements
+//dependencies
 const bodyParser = require("body-parser");
-
 const mongoose = require("mongoose");
-const axios = require("axios");
-const cheerio = require("cheerio");
+const logger = require("morgan");
 
-//Require the models
-const db = require("./models");
-
-//Set the port
-const PORT = process.env.PORT || 3000;
-
-//Initialize express
+//initialize Express app
 const express = require("express");
 const app = express();
 
-//logs using morgan
-const logger = require("morgan");
 app.use(logger("dev"));
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(
+  bodyParser.urlencoded({
+    extended: false
+  })
+);
 
-//Set handlebars route
+app.use(express.static(process.cwd() + "/public"));
+//Require set up handlebars
 const exphbs = require("express-handlebars");
-app.engine("handlebars", exphbs({ defaultLayout: "main" }));
+app.engine(
+  "handlebars",
+  exphbs({
+    defaultLayout: "main"
+  })
+);
 app.set("view engine", "handlebars");
 
-//Parse request body as JSON
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-
-//Make public a static folder
-app.use(express.static("public"));
-
-// If deployed, use the deployed database. Otherwise use the local mongoHeadlines database
+//connecting to MongoDB
+//mongoose.connect("mongodb://localhost/scraped_news");
 const MONGODB_URI =
-  process.env.MONGODB_URI || "mongodb://localhost/newsScraper";
-//Connect to the Mongo DB
+  process.env.MONGODB_URI || "mongodb://localhost/scraper_news";
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
 
-//Start server
-app.listen(PORT, function() {
-  console.log("News scraping app running on http://localhost:" + PORT);
+const db = mongoose.connection;
+db.on("error", console.error.bind(console, "connection error:"));
+db.once("open", function() {
+  console.log("Connected to Mongoose!");
+});
+
+const routes = require("./controller/controller.js");
+app.use("/", routes);
+//Create localhost port
+const port = process.env.PORT || 3000;
+app.listen(port, function() {
+  console.log("Listening on PORT " + port);
 });
